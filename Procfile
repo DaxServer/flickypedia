@@ -1,1 +1,1 @@
-bot: python src/flickypedia/backfillr/bot.py
+bot: python /workspace/src/flickypedia/backfillr/bot.py
