@@ -95,6 +95,8 @@ more-itertools==10.1.0
     #   jaraco-functools
 mwparserfromhell==0.6.6
     # via pywikibot
+oauthlib==3.2.2
+    # via requests-oauthlib
 orderly-set==5.2.2
     # via deepdiff
 packaging==23.2
