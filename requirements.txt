@@ -16,8 +16,11 @@ certifi==2023.7.22
     # via
     #   httpcore
     #   httpx
+    #   requests
 cffi==1.16.0
     # via cryptography
+charset-normalizer==3.3.2
+    # via requests
 click==8.1.7
     # via
     #   -r requirements.in
@@ -26,7 +29,8 @@ cryptography==43.0.1
     # via
     #   -r requirements.in
     #   authlib
-    #   secretstorage
+deepdiff==8.0.1
+    # via -r requirements.in
 flask==3.0.3
     # via
     #   -r requirements.in
@@ -45,8 +49,6 @@ flickr-url-parser==1.10.0
     # via
     #   -r requirements.in
     #   flickr-photos-api
-greenlet==3.0.3
-    # via sqlalchemy
 gunicorn==23.0.0
     # via -r requirements.in
 h11==0.14.0
@@ -65,6 +67,7 @@ idna==3.4
     #   anyio
     #   httpx
     #   hyperlink
+    #   requests
 itsdangerous==2.1.2
     # via
     #   flask
@@ -75,10 +78,6 @@ jaraco-context==5.3.0
     # via keyring
 jaraco-functools==4.0.1
     # via keyring
-jeepney==0.8.0
-    # via
-    #   keyring
-    #   secretstorage
 jinja2==3.1.2
     # via flask
 keyring==25.3.0
@@ -94,16 +93,24 @@ more-itertools==10.1.0
     # via
     #   jaraco-classes
     #   jaraco-functools
+mwparserfromhell==0.6.6
+    # via pywikibot
+orderly-set==5.2.2
+    # via deepdiff
 packaging==23.2
-    # via gunicorn
+    # via
+    #   gunicorn
+    #   pywikibot
 pycparser==2.21
     # via cffi
 pydantic==2.9.1
     # via -r requirements.in
 pydantic-core==2.23.3
     # via pydantic
-secretstorage==3.3.3
-    # via keyring
+pywikibot==9.3.1
+    # via -r requirements.in
+requests==2.32.3
+    # via pywikibot
 silver-nitrate==1.1.2
     # via flickr-photos-api
 sniffio==1.3.0
@@ -123,6 +130,8 @@ typing-extensions==4.8.0
     #   pydantic
     #   pydantic-core
     #   sqlalchemy
+urllib3==2.2.2
+    # via requests
 werkzeug==3.0.4
     # via
     #   -r requirements.in

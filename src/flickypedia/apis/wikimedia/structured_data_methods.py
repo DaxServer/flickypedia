@@ -67,7 +67,7 @@ class StructuredDataMethods(WikimediaApiBase):
         else:  # pragma: no cover
             raise WikimediaApiException(f"Unexpected response: {resp}")
 
-    def get_structured_data(self, *, filename: str) -> ExistingClaims:
+    def get_structured_data(self, *, mid: str) -> ExistingClaims:
         """
         Retrieve the structured data for a file on Wikimedia Commons.
 
@@ -80,13 +80,10 @@ class StructuredDataMethods(WikimediaApiBase):
         See https://www.wikidata.org/w/api.php?modules=wbgetentities&action=help
 
         """
-        assert not filename.startswith("File:")
-
         resp = self._get_json(
             params={
                 "action": "wbgetentities",
-                "sites": "commonswiki",
-                "titles": f"File:{filename}",
+                "ids": mid,
             }
         )
 
@@ -124,7 +121,7 @@ class StructuredDataMethods(WikimediaApiBase):
         #      'title': 'File:DefinitelyDoesNotExist.jpg'}
         #
         if "missing" in page:
-            raise MissingFileException(filename)
+            raise MissingFileException(mid)
 
         # Otherwise, we got some statements back to Commons, which we
         # need to turn into a useful response.
@@ -137,7 +134,7 @@ class StructuredDataMethods(WikimediaApiBase):
         # There are tests for both cases if you want to see example responses.
         statements = list(resp["entities"].values())[0]["statements"]
 
-        if statements == []:
+        if not statements:
             return {}
         else:
             return validate_type(statements, model=ExistingClaims)

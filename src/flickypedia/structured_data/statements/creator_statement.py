@@ -17,7 +17,7 @@ def create_flickr_creator_statement(user: FlickrUser) -> NewStatement:
     qualifier_values: list[QualifierValues] = [
         {
             "property": WikidataProperties.AuthorName,
-            "value": user["realname"] or user["username"],
+            "value": (user["realname"] or user["username"]).strip(),
             "type": "string",
         },
         {
