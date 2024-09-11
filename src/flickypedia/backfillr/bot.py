@@ -22,7 +22,7 @@ def main() -> None:
     args = parser.parse_args()
     skip = args.skip_until is not None
 
-    site = Site("commons", "commons", user="CuratorBot")
+    site = Site()
     site.login()
 
     flickr_api = FlickrApi.with_api_key(
