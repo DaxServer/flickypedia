@@ -22,7 +22,17 @@ def main() -> None:
     args = parser.parse_args()
     skip = args.skip_until is not None
 
-    site = Site()
+    if os.getenv('PWB_CONSUMER_TOKEN') and os.getenv('PWB_CONSUMER_SECRET') and os.getenv('PWB_ACCESS_TOKEN') and os.getenv('PWB_ACCESS_SECRET'):
+        authenticate = (
+            os.getenv('PWB_CONSUMER_TOKEN'),
+            os.getenv('PWB_CONSUMER_SECRET'),
+            os.getenv('PWB_ACCESS_TOKEN'),
+            os.getenv('PWB_ACCESS_SECRET'),
+        )
+        pywikibot.config.authenticate['commons.wikimedia.org'] = authenticate
+
+    login_username = os.getenv("PWB_USERNAME") or "CuratorBot"
+    site = Site("commons", "commons", user=login_username)
     site.login()
 
     flickr_api = FlickrApi.with_api_key(

@@ -23,4 +23,5 @@ style.css.*.tmp
 logs
 pywikibot*
 throttle.ctrl
+user-config.py
 user-password.py
