@@ -11,6 +11,7 @@ from deepdiff import DeepDiff
 from flickr_photos_api import FlickrApi
 from httpx import Client
 from pywikibot import Site
+from pywikibot.pagegenerators import SearchPageGenerator
 
 from flickypedia.apis import WikimediaApi
 from flickypedia.backfillr.backfillr import Backfillr
@@ -30,11 +31,14 @@ def main() -> None:
             os.getenv('PWB_ACCESS_SECRET'),
         )
         pywikibot.config.authenticate['commons.wikimedia.org'] = authenticate
+    else:
+        pywikibot.config.password_file = os.path.relpath(os.path.join(os.path.dirname(__file__), "../../../user-password.py"))
 
     login_username = os.getenv("PWB_USERNAME") or "CuratorBot"
     site = Site("commons", "commons", user=login_username)
     site.login()
 
+    generator = SearchPageGenerator("file: insource:flickr -haswbstatement:P12120", site=site)
     flickr_api = FlickrApi.with_api_key(
         api_key=os.getenv("FLICKR_API_KEY"),
         user_agent=os.getenv("USER_AGENT"),
@@ -48,22 +52,24 @@ def main() -> None:
 
     file = NamedTemporaryFile(mode="w")
 
-    with generic_http.stream("GET", "https://files.daxserver.com/files/flickr.csv") as response:
-        for text in response.iter_text():
-            file.write(text)
+    # with generic_http.stream("GET", "https://files.daxserver.com/files/flickr.csv") as response:
+    #     for text in response.iter_text():
+    #         file.write(text)
 
     with open(file.name) as f:
-        reader = csv.reader(f)
+        # reader = csv.reader(f)
 
-        while row := next(reader):
-            if skip:
-                if row[0].split('/')[-1] != args.skip_until:
-                    pywikibot.info(f"Skipping {row[0]}")
-                    continue
-                else:
-                    skip = False
+        for page in generator:
+        # while row := next(reader):
+        #     if skip:
+        #         if row[0].split('/')[-1] != args.skip_until:
+        #             pywikibot.info(f"Skipping {row[0]}")
+        #             continue
+        #         else:
+        #             skip = False
 
-            mid = row[0].split('/')[-1]
+            # mid = row[0].split('/')[-1]
+            mid = f"M{page.pageid}"
             pywikibot.info(f"Processing {mid}")
 
             page_id = mid.lstrip("M")
