@@ -14,19 +14,20 @@ def create_license_statement(license_id: str, title: str | None = None, author_n
 
     qualifiers: list[QualifierValues] = []
 
-    if title is not None:
-        qualifiers.append({
-            "property": WikidataProperties.Title,
-            "value": {"text": title, "language": "en"},
-            "type": "monolingualtext",
-        })
+    if 'cc-by-sa-2.0' == license_id:
+        if title is not None:
+            qualifiers.append({
+                "property": WikidataProperties.Title,
+                "value": {"text": title, "language": "en"},
+                "type": "monolingualtext",
+            })
 
-    if author_name_string is not None:
-        qualifiers.append({
-            "property": WikidataProperties.AuthorName,
-            "value": author_name_string,
-            "type": "string",
-        })
+        if author_name_string is not None:
+            qualifiers.append({
+                "property": WikidataProperties.AuthorName,
+                "value": author_name_string,
+                "type": "string",
+            })
 
     return {
         "mainsnak": {
