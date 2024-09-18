@@ -38,7 +38,7 @@ def main() -> None:
     site = Site("commons", "commons", user=login_username)
     site.login()
 
-    generator = SearchPageGenerator("file: insource:flickr -haswbstatement:P12120", site=site)
+    generator = SearchPageGenerator('file: insource:flickr insource:"Category:Flickr" -haswbstatement:P12120', site=site)
     flickr_api = FlickrApi.with_api_key(
         api_key=os.getenv("FLICKR_API_KEY"),
         user_agent=os.getenv("USER_AGENT"),
