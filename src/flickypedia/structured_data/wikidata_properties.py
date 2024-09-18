@@ -10,25 +10,26 @@ class WikidataProperties:
     # https://www.wikidata.org/wiki/Property:<PROPERTY_ID>
     #
     # e.g. https://www.wikidata.org/wiki/Property:P2093
-    Operator = "P137"
     AppliesToJurisdiction = "P1001"
-    Creator = "P170"
-    DescribedAtUrl = "P973"
-    DeterminationMethod = "P459"
     AuthorName = "P2093"
     BhlPageId = "P687"
     CoordinatesOfThePointOfView = "P1259"
-    FlickrPhotoId = "P12120"
-    FlickrUserId = "P3267"
-    Url = "P2699"
-    SourceOfFile = "P7482"
     CopyrightLicense = "P275"
     CopyrightStatus = "P6216"
+    Creator = "P170"
+    DescribedAtUrl = "P973"
+    DeterminationMethod = "P459"
+    FlickrPhotoId = "P12120"
+    FlickrUserId = "P3267"
     Inception = "P571"
+    Operator = "P137"
     PublicationDate = "P577"
     PublishedIn = "P1433"
     Retrieved = "P813"
+    SourceOfFile = "P7482"
     SourcingCircumstances = "P1480"
+    Title = "P1476"
+    Url = "P2699"
 
 
 def get_wikidata_property_label(id: str) -> str:

@@ -41,7 +41,7 @@ from .wikidata_datamodel import DataValue, Qualifiers
 from .wikidata_values import (
     to_wikidata_date_value,
     to_wikidata_entity_value,
-    to_wikidata_string_value,
+    to_wikidata_string_value, to_wikidata_monolingualtext_value,
 )
 
 
@@ -80,11 +80,18 @@ def create_qualifiers(qualifier_values: list[QualifierValues]) -> Qualifiers:
             datavalue = to_wikidata_string_value(value=qualifier["value"])
         elif qualifier["type"] == "entity":
             datavalue = to_wikidata_entity_value(entity_id=qualifier["entity_id"])
-        else:
+        elif qualifier["type"] == "date":
             assert qualifier["type"] == "date"
             datavalue = to_wikidata_date_value(
                 qualifier["date"], precision=qualifier["precision"]
             )
+        elif qualifier["type"] == "monolingualtext":
+            assert qualifier["type"] == "monolingualtext"
+            datavalue = to_wikidata_monolingualtext_value(
+                text=qualifier["value"]["text"], language=qualifier["value"]["language"]
+            )
+        else:
+            raise ValueError(f"Unknown qualifier type: {qualifier['type']}")
 
         result[property_id] = [
             {

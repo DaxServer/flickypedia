@@ -11,8 +11,8 @@ from ..wikidata_properties import WikidataProperties
 
 
 def create_source_statement(
-    photo_id: str,
-    photo_url: str,
+    described_at_url: str,
+    operator: str,
     original_url: str | None,
     retrieved_at: datetime.datetime | None,
 ) -> NewStatement:
@@ -22,12 +22,12 @@ def create_source_statement(
     qualifier_values: list[QualifierValues] = [
         {
             "property": WikidataProperties.DescribedAtUrl,
-            "value": photo_url,
+            "value": described_at_url,
             "type": "string",
         },
         {
             "property": WikidataProperties.Operator,
-            "entity_id": WikidataEntities.Flickr,
+            "entity_id": operator,
             "type": "entity",
         },
     ]
