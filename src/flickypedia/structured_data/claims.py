@@ -9,7 +9,7 @@ from .statements import (
     create_copyright_status_statement,
     create_date_taken_statement,
     create_flickr_creator_statement,
-    create_flickr_photo_id_statement,
+    create_id_statement,
     create_license_statement,
     create_location_statement,
     create_published_in_statement,
@@ -29,7 +29,9 @@ def _create_sdc_claims_for_flickr_photo(
 
     This is the main entry point into this file for the rest of Flickypedia.
     """
-    photo_id_statement = create_flickr_photo_id_statement(photo_id=photo["id"])
+    from . import WikidataEntities, WikidataProperties
+
+    photo_id_statement = create_id_statement(id=photo["id"], which_id=WikidataProperties.FlickrPhotoId)
     creator_statement = create_flickr_creator_statement(user=photo["owner"])
 
     statements = [
@@ -63,8 +65,8 @@ def _create_sdc_claims_for_flickr_photo(
             original_url = original_size["source"]
 
     source_statement = create_source_statement(
-        photo_id=photo["id"],
-        photo_url=photo["url"],
+        described_at_url=photo["url"],
+        operator=WikidataEntities.Flickr,
         original_url=original_url,
         retrieved_at=retrieved_at,
     )
@@ -76,8 +78,12 @@ def _create_sdc_claims_for_flickr_photo(
     # can have changed since a photo was initially uploaded to Flickr.
     #
     # TODO: Investigate whether we can do anything here with license history.
-    if mode == "new_photo":
-        license_statement = create_license_statement(license_id=photo["license"]["id"])
+    if photo["license"]["id"] in WikidataEntities.Licenses:
+        license_statement = create_license_statement(
+            license_id=photo["license"]["id"],
+            title=photo["title"] if "title" in photo else None,
+            author_name_string=photo["owner"]["realname"] or photo["owner"]["username"],
+        )
 
         copyright_statement = create_copyright_status_statement(
             license_id=photo["license"]["id"]
@@ -94,7 +100,8 @@ def _create_sdc_claims_for_flickr_photo(
         statements.append(create_date_taken_statement(date_taken=photo["date_taken"]))
 
     published_in_statement = create_published_in_statement(
-        date_posted=photo["date_posted"]
+        date_posted=photo["date_posted"],
+        published_in=WikidataEntities.Flickr,
     )
 
     statements.append(published_in_statement)

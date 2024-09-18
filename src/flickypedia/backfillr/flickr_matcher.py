@@ -75,9 +75,7 @@ def get_flickr_photo_id_from_url(url: str) -> str | None:
             return None
 
 
-def find_flickr_photo_id_from_wikitext(
-    wikitext: str, filename: str
-) -> FindResult | None:
+def find_flickr_photo_id_from_wikitext(wikitext: str) -> FindResult | None:
     """
     Given the name of a file on Wikimedia Commons, look for Flickr URLs
     in the Wikitext.  This looks for Flickr URLs in the Wikitext, then
