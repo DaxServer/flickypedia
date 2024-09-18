@@ -78,17 +78,18 @@ def _create_sdc_claims_for_flickr_photo(
     # can have changed since a photo was initially uploaded to Flickr.
     #
     # TODO: Investigate whether we can do anything here with license history.
-    license_statement = create_license_statement(
-        license_id=photo["license"]["id"],
-        title=photo["title"] if "title" in photo else None,
-        author_name_string=photo["owner"]["realname"] or photo["owner"]["username"],
-    )
+    if photo["license"]["id"] in WikidataEntities.Licenses:
+        license_statement = create_license_statement(
+            license_id=photo["license"]["id"],
+            title=photo["title"] if "title" in photo else None,
+            author_name_string=photo["owner"]["realname"] or photo["owner"]["username"],
+        )
 
-    copyright_statement = create_copyright_status_statement(
-        license_id=photo["license"]["id"]
-    )
+        copyright_statement = create_copyright_status_statement(
+            license_id=photo["license"]["id"]
+        )
 
-    statements.extend([license_statement, copyright_statement])
+        statements.extend([license_statement, copyright_statement])
 
     location_statement = create_location_statement(location=photo["location"])
 
