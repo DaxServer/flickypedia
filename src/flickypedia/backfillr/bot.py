@@ -7,7 +7,7 @@ from time import perf_counter
 import flickr_url_parser
 import pywikibot
 from deepdiff import DeepDiff
-from flickr_photos_api import FlickrApi, PhotoIsPrivate, ResourceNotFound
+from flickr_photos_api import FlickrApi, PhotoIsPrivate, ResourceNotFound, UserDeleted
 from httpx import Client
 from pywikibot import Site
 from pywikibot.pagegenerators import SearchPageGenerator
@@ -163,12 +163,16 @@ class CuratorBot:
             except (PhotoIsPrivate, ResourceNotFound) as e:
                 pywikibot.warning(f"{flickr_id['photo_id']} warning: {e}")
 
-                start = perf_counter()
-                user_url = flickr_url_parser.parse_flickr_url(flickr_id["url"])["user_url"]
-                user = flickr_api.get_user(user_url=user_url)
-                pywikibot.info(f"Retrieved Flickr user in {(perf_counter() - start) * 1000:.0f} ms")
+                try:
+                    start = perf_counter()
+                    user_url = flickr_url_parser.parse_flickr_url(flickr_id["url"])["user_url"]
+                    user = flickr_api.get_user(user_url=user_url)
+                    pywikibot.info(f"Retrieved Flickr user in {(perf_counter() - start) * 1000:.0f} ms")
 
-                new_claims = create_sdc_claims_for_existing_flickr_photo(user=user, photo_id=flickr_id["photo_id"], photo_url=flickr_id["url"])
+                    new_claims = create_sdc_claims_for_existing_flickr_photo(user=user, photo_id=flickr_id["photo_id"], photo_url=flickr_id["url"])
+                except (ResourceNotFound, UserDeleted) as e:
+                    pywikibot.warning(f"{flickr_id['photo_id']} warning: {e}")
+                    continue
 
             pywikibot.debug(new_claims)
             pywikibot.debug(user)
