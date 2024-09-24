@@ -118,7 +118,7 @@ class CuratorBot:
                 continue
 
             filename = pageinfo["query"]["pages"][page_id]["title"]
-            pywikibot.info(f"The filename for {mid} is {filename}")
+            pywikibot.info(f"URL for {mid}: {url}")
 
             categories = [c["title"] for c in pageinfo["query"]["pages"][page_id]["categories"]]
             pywikibot.debug(categories)
