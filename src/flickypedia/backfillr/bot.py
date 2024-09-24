@@ -149,7 +149,7 @@ class CuratorBot:
                     flickr_id = flickr_id_wikitext
 
             if flickr_id is None:
-                pywikibot.error(f"Unable to find Flickr ID for {filename}")
+                pywikibot.error("Unable to find Flickr ID")
                 continue
 
             pywikibot.info(f"Flickr ID: {flickr_id}")
