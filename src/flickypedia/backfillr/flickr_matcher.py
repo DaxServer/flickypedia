@@ -112,40 +112,12 @@ def find_flickr_photo_id_from_wikitext(wikitext: str) -> FindResult | None:
         anchor_tags = row.find_all("a")
         urls = [a_tag.attrs.get("href") for a_tag in anchor_tags]
 
-        if len(urls) == 1:
-            url = urls[0]
+        photo_ids = [x for x in [{
+            "photo_id": get_flickr_photo_id_from_url(url),
+            "url": url,
+        } for url in urls] if x["photo_id"] is not None]
 
-            photo_id = get_flickr_photo_id_from_url(url)
-            if photo_id is not None:
-                return {"photo_id": photo_id, "url": url}
-
-        # Now look for two <a> tags; a common pattern is for somebody to
-        # link to both Flickr.com and the individual photo page.
-        #
-        # For example:
-        #
-        #     <td>
-        #       <a href="https://www.flickr.com/">Flickr.com</a> -
-        #       <a href="https://www.flickr.com/photos/51035573370@N01/869031">
-        #         image description page
-        #       </a>
-        #     </td>
-        #
-        if len(anchor_tags) == 2 and is_flickr_homepage(urls[0]):
-            url = urls[1]
-
-            photo_id = get_flickr_photo_id_from_url(url)
-            if photo_id is not None:
-                return {"photo_id": photo_id, "url": url}
-
-        # Another common pattern is people linking to the Wikipedia
-        # page for Flickr.
-        if len(anchor_tags) == 2 and urls[0] == "/wiki/Flickr":
-            url = urls[1]
-
-            photo_id = get_flickr_photo_id_from_url(url)
-            if photo_id is not None:
-                return {"photo_id": photo_id, "url": url}
+        return photo_ids[0] if len(photo_ids) == 1 else None
 
     # Now look for any links which are explicitly labelled as
     # "Source: <URL>" in the Wikitext.  For example:
