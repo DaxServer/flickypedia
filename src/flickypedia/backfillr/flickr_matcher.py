@@ -75,7 +75,7 @@ def get_flickr_photo_id_from_url(url: str) -> str | None:
             return None
 
 
-def find_flickr_photo_id_from_wikitext(wikitext: str) -> FindResult | None:
+def find_flickr_photo_id_from_parsed_wikitext(html: str) -> FindResult | None:
     """
     Given the name of a file on Wikimedia Commons, look for Flickr URLs
     in the Wikitext.  This looks for Flickr URLs in the Wikitext, then
@@ -83,7 +83,7 @@ def find_flickr_photo_id_from_wikitext(wikitext: str) -> FindResult | None:
 
     Only matching files are returned.
     """
-    soup = bs4.BeautifulSoup(wikitext, "html.parser")
+    soup = bs4.BeautifulSoup(html, "html.parser")
 
     # Look for an Information table in the Wikitext.
     #
@@ -117,7 +117,8 @@ def find_flickr_photo_id_from_wikitext(wikitext: str) -> FindResult | None:
             "url": url,
         } for url in urls] if x["photo_id"] is not None]
 
-        return photo_ids[0] if len(photo_ids) == 1 else None
+        if len(photo_ids) == 1:
+            return photo_ids[0]
 
     # Now look for any links which are explicitly labelled as
     # "Source: <URL>" in the Wikitext.  For example:
@@ -125,14 +126,13 @@ def find_flickr_photo_id_from_wikitext(wikitext: str) -> FindResult | None:
     #     <li>Source: https://www.flickr.com/photos/justinaugust/3731022/</li>
     #     <p>Source: https://www.flickr.com/photos/metalphoenix/3874334/\n</p>
     #
-    for anchor_tag in soup.find_all("a"):
-        url = anchor_tag.attrs["href"]
-        photo_id = get_flickr_photo_id_from_url(url)
-        if photo_id is not None:
-            if anchor_tag.parent.text.strip() in {f"Source: {url}", "Source: Flickr"}:
-                return {"photo_id": photo_id, "url": url}
+    urls = [tag.attrs["href"] for tag in soup.find_all("a")]
+    photo_ids = [x for x in [{
+        "photo_id": get_flickr_photo_id_from_url(url),
+        "url": url,
+    } for url in urls] if x["photo_id"] is not None]
 
-    return None
+    return photo_ids[0] if len(photo_ids) == 1 else None
 
 
 def get_qualifiers(statement: ExistingStatement, *, property_id: str) -> list[Snak]:
