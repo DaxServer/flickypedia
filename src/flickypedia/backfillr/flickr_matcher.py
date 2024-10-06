@@ -119,6 +119,8 @@ def find_flickr_photo_id_from_parsed_wikitext(html: str) -> FindResult | None:
 
         if len(photo_ids) == 1:
             return photo_ids[0]
+        
+    return None
 
     # Now look for any links which are explicitly labelled as
     # "Source: <URL>" in the Wikitext.  For example:
