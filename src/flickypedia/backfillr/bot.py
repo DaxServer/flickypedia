@@ -149,7 +149,7 @@ class CuratorBot:
                     pywikibot.info(f"Retrieved Flickr user in {(perf_counter() - start) * 1000:.0f} ms")
 
                     new_claims = create_sdc_claims_for_existing_flickr_photo(user=user, photo_id=flickr_id["photo_id"], photo_url=flickr_id["url"])
-                except (ResourceNotFound, UserDeleted) as e:
+                except Exception as e:
                     pywikibot.warning(f"{flickr_id['photo_id']} warning: {e}")
                     continue
 
