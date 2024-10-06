@@ -145,6 +145,10 @@ class CuratorBot:
                 try:
                     start = perf_counter()
                     user_url = flickr_url_parser.parse_flickr_url(flickr_id["url"])["user_url"]
+
+                    if user_url is None:
+                        pywikibot.warning(f"Unable to find user URL")
+
                     user = flickr_api.get_user(user_url=user_url)
                     pywikibot.info(f"Retrieved Flickr user in {(perf_counter() - start) * 1000:.0f} ms")
 
