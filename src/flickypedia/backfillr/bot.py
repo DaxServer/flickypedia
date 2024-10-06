@@ -9,8 +9,8 @@ import pywikibot
 from deepdiff import DeepDiff
 from flickr_photos_api import FlickrApi, PhotoIsPrivate, ResourceNotFound, UserDeleted
 from httpx import Client
-from pywikibot import Site, Category
-from pywikibot.pagegenerators import CategorizedPageGenerator
+from pywikibot import Site
+from pywikibot.pagegenerators import SearchPageGenerator
 
 from flickypedia.apis import WikimediaApi
 from flickypedia.backfillr.actions import create_actions
@@ -98,8 +98,7 @@ class CuratorBot:
 
     def flickr(self) -> None:
         flickr_api = FlickrApi.with_api_key(api_key=os.getenv("FLICKR_API_KEY"), user_agent=self.user_agent)
-        category = Category(self.site, "Flickr images missing SDC data")
-        generator = CategorizedPageGenerator(category, recurse=True, namespaces=[6])
+        generator = SearchPageGenerator("file: insource:/Category:(Files from )?Flickr/i -haswbstatement:P12120", site=self.site)
 
         for page in generator:
             page_id = str(page.pageid)
