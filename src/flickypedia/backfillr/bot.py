@@ -14,7 +14,8 @@ from pywikibot.pagegenerators import SearchPageGenerator
 
 from flickypedia.apis import WikimediaApi
 from flickypedia.backfillr.actions import create_actions
-from flickypedia.backfillr.flickr_matcher import find_flickr_photo_id_from_sdc, find_flickr_photo_id_from_wikitext
+from flickypedia.backfillr.flickr_matcher import find_flickr_photo_id_from_sdc, \
+    find_flickr_photo_id_from_parsed_wikitext
 from flickypedia.structured_data import create_sdc_claims_for_existing_flickr_photo
 
 
@@ -104,43 +105,21 @@ class CuratorBot:
             mid = f"M{page_id}"
             pywikibot.info(f"Processing {mid}")
 
-            url = f"https://commons.wikimedia.org/w/api.php?action=query&prop=categories&format=json&pageids={page_id}"
-            try:
-                start = perf_counter()
-                pageinfo = self.http_client.get(url, follow_redirects=True).json()
-                pywikibot.info(f"Fetching Categories from Commons took {(perf_counter() - start) * 1000:.0f} ms")
-            except Exception as e:
-                pywikibot.error(f"Failed to fetch {url}: {e}")
-                continue
-
-            if "title" not in pageinfo["query"]["pages"][page_id]:
-                pywikibot.error(f"Skipping as pageinfo is empty")
-                continue
-
-            filename = pageinfo["query"]["pages"][page_id]["title"]
+            filename = page.title()
             pywikibot.info(f"URL for {mid}: {page.full_url()}")
-
-            categories = [c["title"] for c in pageinfo["query"]["pages"][page_id]["categories"]]
-            pywikibot.debug(categories)
-
-            categories_good = [c.startswith("Category:Flickr images") or c.startswith("Category:Files from Flickr") for c in categories]
-            if not any(categories_good):
-                pywikibot.error(f"Skipping as it was not categorized into Flickr images. Categories: {categories}")
-                continue
 
             existing_claims = self.get_existing_claims(mid)
             pywikibot.debug(existing_claims)
 
             start = perf_counter()
-            wikitext = self.wikimedia_api.get_wikitext(fileid=int(page_id), filename=filename)
-            pywikibot.info(f"Retrieved wikitext in {(perf_counter() - start) * 1000:.0f} ms")
-            pywikibot.debug(wikitext)
+            wikitext_parsed = self.wikimedia_api.get_wikitext(fileid=int(page_id), filename=filename)
+            pywikibot.info(f"Retrieved parsed wikitext in {(perf_counter() - start) * 1000:.0f} ms")
+            pywikibot.debug(wikitext_parsed)
 
-            flickr_id_sdc = find_flickr_photo_id_from_sdc(existing_claims)
-            flickr_id = flickr_id_sdc
+            flickr_id = find_flickr_photo_id_from_sdc(existing_claims)
 
             if flickr_id is None or flickr_id["url"] is None:
-                flickr_id_wikitext = find_flickr_photo_id_from_wikitext(wikitext)
+                flickr_id_wikitext = find_flickr_photo_id_from_parsed_wikitext(wikitext_parsed)
 
                 if flickr_id_wikitext is not None:
                     if flickr_id is not None and flickr_id["photo_id"] != flickr_id_wikitext["photo_id"]:
