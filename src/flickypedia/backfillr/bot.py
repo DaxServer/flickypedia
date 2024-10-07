@@ -116,16 +116,20 @@ class CuratorBot:
             pywikibot.info(f"Retrieved parsed wikitext in {(perf_counter() - start) * 1000:.0f} ms")
             pywikibot.debug(wikitext_parsed)
 
-            flickr_id = find_flickr_photo_id_from_sdc(existing_claims)
+            try:
+                flickr_id = find_flickr_photo_id_from_sdc(existing_claims)
 
-            if flickr_id is None or flickr_id["url"] is None:
-                flickr_id_wikitext = find_flickr_photo_id_from_parsed_wikitext(wikitext_parsed)
+                if flickr_id is None or flickr_id["url"] is None:
+                    flickr_id_wikitext = find_flickr_photo_id_from_parsed_wikitext(wikitext_parsed)
 
-                if flickr_id_wikitext is not None:
-                    if flickr_id is not None and flickr_id["photo_id"] != flickr_id_wikitext["photo_id"]:
-                        pywikibot.error(f"Photo ID mismatch: SDC {flickr_id} vs Wikitext {flickr_id_wikitext}")
-                        continue
-                    flickr_id = flickr_id_wikitext
+                    if flickr_id_wikitext is not None:
+                        if flickr_id is not None and flickr_id["photo_id"] != flickr_id_wikitext["photo_id"]:
+                            pywikibot.error(f"Photo ID mismatch: SDC {flickr_id} vs Wikitext {flickr_id_wikitext}")
+                            continue
+                        flickr_id = flickr_id_wikitext
+            except Exception as e:
+                pywikibot.warning(f"Warning: {e}")
+                flickr_id = None
 
             if flickr_id is None:
                 pywikibot.error("Unable to find Flickr ID")
