@@ -98,7 +98,7 @@ class CuratorBot:
 
     def flickr(self) -> None:
         flickr_api = FlickrApi.with_api_key(api_key=os.getenv("FLICKR_API_KEY"), user_agent=self.user_agent)
-        generator = SearchPageGenerator("file: insource:/Category:(Files from )?Flickr/i -haswbstatement:P12120", site=self.site)
+        generator = SearchPageGenerator("file: insource:/Category:(Files from )?Flickr/i -haswbstatement:P170", site=self.site)
 
         for page in generator:
             page_id = str(page.pageid)
@@ -116,16 +116,20 @@ class CuratorBot:
             pywikibot.info(f"Retrieved parsed wikitext in {(perf_counter() - start) * 1000:.0f} ms")
             pywikibot.debug(wikitext_parsed)
 
-            flickr_id = find_flickr_photo_id_from_sdc(existing_claims)
+            try:
+                flickr_id = find_flickr_photo_id_from_sdc(existing_claims)
 
-            if flickr_id is None or flickr_id["url"] is None:
-                flickr_id_wikitext = find_flickr_photo_id_from_parsed_wikitext(wikitext_parsed)
+                if flickr_id is None or flickr_id["url"] is None:
+                    flickr_id_wikitext = find_flickr_photo_id_from_parsed_wikitext(wikitext_parsed)
 
-                if flickr_id_wikitext is not None:
-                    if flickr_id is not None and flickr_id["photo_id"] != flickr_id_wikitext["photo_id"]:
-                        pywikibot.error(f"Photo ID mismatch: SDC {flickr_id} vs Wikitext {flickr_id_wikitext}")
-                        continue
-                    flickr_id = flickr_id_wikitext
+                    if flickr_id_wikitext is not None:
+                        if flickr_id is not None and flickr_id["photo_id"] != flickr_id_wikitext["photo_id"]:
+                            pywikibot.error(f"Photo ID mismatch: SDC {flickr_id} vs Wikitext {flickr_id_wikitext}")
+                            continue
+                        flickr_id = flickr_id_wikitext
+            except Exception as e:
+                pywikibot.warning(f"Warning: {e}")
+                flickr_id = None
 
             if flickr_id is None:
                 pywikibot.error("Unable to find Flickr ID")
