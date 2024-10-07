@@ -98,7 +98,7 @@ class CuratorBot:
 
     def flickr(self) -> None:
         flickr_api = FlickrApi.with_api_key(api_key=os.getenv("FLICKR_API_KEY"), user_agent=self.user_agent)
-        generator = SearchPageGenerator("file: insource:/Category:(Files from )?Flickr/i -haswbstatement:P12120", site=self.site)
+        generator = SearchPageGenerator("file: insource:/Category:(Files from )?Flickr/i -haswbstatement:P170", site=self.site)
 
         for page in generator:
             page_id = str(page.pageid)
