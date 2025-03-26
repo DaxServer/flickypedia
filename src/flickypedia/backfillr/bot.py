@@ -42,7 +42,7 @@ class CuratorBot:
 
         self.http_client = Client(headers={"User-Agent": self.user_agent})
         self.wikimedia_api = WikimediaApi(client=self.http_client)
-        self.pd_us_templates = self.wikimedia_api.find_pd_us_templates()
+        self.pd_us_templates = []
 
     def update(self, mid: str, summary: str, existing_claims, new_claims, user = None) -> None:
         actions = create_actions(existing_claims, new_claims, user)
@@ -104,9 +104,10 @@ class CuratorBot:
         return any([t in self.pd_us_templates for t in templates])
 
     def flickr(self) -> None:
+        self.pd_us_templates = [t['title'] for t in httpx.get('https://petscan.wmcloud.org/?psid=33444757&format=json').json()['*'][0]['a']['*']]
+
         flickr_api = FlickrApi.with_api_key(api_key=os.getenv("FLICKR_API_KEY"), user_agent=self.user_agent)
         generator = SearchPageGenerator("file: insource:/Category:(Files from )?Flickr/i -haswbstatement:P170", site=self.site)
-        # generator = SearchPageGenerator("file: insource:/PD-USGov-.*Public Domain Mark.*Category:(Files from )?Flickr/i", site=self.site)
 
         for page in generator:
             page_id = str(page.pageid)
