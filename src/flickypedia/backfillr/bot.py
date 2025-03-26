@@ -6,6 +6,7 @@ from pprint import pprint
 from time import perf_counter
 
 import flickr_url_parser
+import httpx
 import pywikibot
 from deepdiff import DeepDiff
 from flickr_photos_api import FlickrApi, PhotoIsPrivate, ResourceNotFound
