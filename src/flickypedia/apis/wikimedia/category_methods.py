@@ -8,6 +8,36 @@ from .base import WikimediaApiBase
 
 
 class CategoryMethods(WikimediaApiBase):
+    def find_pd_us_templates(self) -> list[str]:
+        """
+        Return a list of pages that are members of this category.
+        """
+        json = self._get_json(
+            params={
+                "action": "query",
+                "list": "categorymembers",
+                "cmtitle": "Category:PD-USGov license tags",
+                "cmlimit": 500,
+                "cmnamespace": 10,
+            },
+        )
+
+        # The JSON response is of the form:
+        #     {
+        #         "batchcomplete": "",
+        #         "query": {
+        #             "categorymembers": [
+        #                 {
+        #                     "pageid": 250,
+        #                     "ns": 10,
+        #                     "title": "Template:PD-USGov"
+        #                 }
+        #             ]
+        #         }
+        #     }
+
+        return [re.sub(r"^Template:", "", member['title']) for member in json["query"]["categorymembers"]]
+
     def find_matching_categories(self, query: str) -> list[str]:
         """
         Return a list of categories that might match this query.

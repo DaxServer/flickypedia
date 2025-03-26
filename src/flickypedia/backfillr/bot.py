@@ -42,6 +42,7 @@ class CuratorBot:
 
         self.http_client = Client(headers={"User-Agent": self.user_agent})
         self.wikimedia_api = WikimediaApi(client=self.http_client)
+        self.pd_us_templates = self.wikimedia_api.find_pd_us_templates()
 
     def update(self, mid: str, summary: str, existing_claims, new_claims, user = None) -> None:
         actions = create_actions(existing_claims, new_claims, user)
@@ -97,9 +98,15 @@ class CuratorBot:
 
         return existing_claims
 
+    def is_us_pd(self, raw_extracted_templates) -> bool:
+        templates = [t for (t, x) in raw_extracted_templates]
+
+        return any([t in self.pd_us_templates for t in templates])
+
     def flickr(self) -> None:
         flickr_api = FlickrApi.with_api_key(api_key=os.getenv("FLICKR_API_KEY"), user_agent=self.user_agent)
         generator = SearchPageGenerator("file: insource:/Category:(Files from )?Flickr/i -haswbstatement:P170", site=self.site)
+        # generator = SearchPageGenerator("file: insource:/PD-USGov-.*Public Domain Mark.*Category:(Files from )?Flickr/i", site=self.site)
 
         for page in generator:
             page_id = str(page.pageid)
@@ -116,6 +123,9 @@ class CuratorBot:
             wikitext_parsed = self.wikimedia_api.get_wikitext(fileid=int(page_id), filename=filename)
             pywikibot.info(f"Retrieved parsed wikitext in {(perf_counter() - start) * 1000:.0f} ms")
             pywikibot.debug(wikitext_parsed)
+
+            is_us_pd = self.is_us_pd(page.raw_extracted_templates)
+            pywikibot.info(f"Is US PD: {is_us_pd}")
 
             try:
                 flickr_id = find_flickr_photo_id_from_sdc(existing_claims)
@@ -142,7 +152,7 @@ class CuratorBot:
                 start = perf_counter()
                 single_photo = flickr_api.get_single_photo(photo_id=flickr_id["photo_id"])
                 pywikibot.info(f"Retrieved Flickr photo in {(perf_counter() - start) * 1000:.0f} ms")
-                new_claims = create_sdc_claims_for_existing_flickr_photo(photo=single_photo)
+                new_claims = create_sdc_claims_for_existing_flickr_photo(photo=single_photo, is_us_pd=is_us_pd)
                 user = single_photo["owner"]
             except (PhotoIsPrivate, ResourceNotFound) as e:
                 pywikibot.warning(f"{flickr_id['photo_id']} warning: {e}")
@@ -153,7 +163,7 @@ class CuratorBot:
                     user = flickr_api.get_user(user_url=user_url)
                     pywikibot.info(f"Retrieved Flickr user in {(perf_counter() - start) * 1000:.0f} ms")
 
-                    new_claims = create_sdc_claims_for_existing_flickr_photo(user=user, photo_id=flickr_id["photo_id"], photo_url=flickr_id["url"])
+                    new_claims = create_sdc_claims_for_existing_flickr_photo(user=user, photo_id=flickr_id["photo_id"], photo_url=flickr_id["url"], is_us_pd=is_us_pd)
                 except Exception as e:
                     pywikibot.warning(f"{flickr_id['photo_id']} warning: {e}")
                     continue

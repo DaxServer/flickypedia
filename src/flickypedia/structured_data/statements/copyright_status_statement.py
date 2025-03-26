@@ -8,22 +8,11 @@ from ..wikidata_entities import WikidataEntities
 from ..wikidata_properties import WikidataProperties
 
 
-def create_copyright_status_statement(license_id: str) -> NewStatement:
+def create_copyright_status_statement(license_id: str, is_us_pd: bool) -> NewStatement:
     """
     Create a structured data statement for a copyright status.
     """
-    if license_id in {"cc-by-2.0", "cc-by-sa-2.0"}:
-        return {
-            "mainsnak": {
-                "snaktype": "value",
-                "property": WikidataProperties.CopyrightStatus,
-                "datavalue": to_wikidata_entity_value(
-                    entity_id=WikidataEntities.Copyrighted
-                ),
-            },
-            "type": "statement",
-        }
-    elif license_id == "usgov":
+    if is_us_pd or license_id == "usgov":
         qualifier_values: list[QualifierValues] = [
             {
                 "property": WikidataProperties.AppliesToJurisdiction,
@@ -50,6 +39,18 @@ def create_copyright_status_statement(license_id: str) -> NewStatement:
                 WikidataProperties.AppliesToJurisdiction,
                 WikidataProperties.DeterminationMethod,
             ],
+            "type": "statement",
+        }
+
+    if license_id in {"cc-by-2.0", "cc-by-sa-2.0"}:
+        return {
+            "mainsnak": {
+                "snaktype": "value",
+                "property": WikidataProperties.CopyrightStatus,
+                "datavalue": to_wikidata_entity_value(
+                    entity_id=WikidataEntities.Copyrighted
+                ),
+            },
             "type": "statement",
         }
 
