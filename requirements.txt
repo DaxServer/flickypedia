@@ -4,11 +4,11 @@ annotated-types==0.6.0
     # via pydantic
 anyio==4.0.0
     # via httpx
-authlib==1.3.2
+authlib==1.4.0
     # via -r requirements.in
 beautifulsoup4==4.12.2
     # via bs4
-blinker==1.7.0
+blinker==1.9.0
     # via flask
 bs4==0.0.2
     # via -r requirements.in
@@ -25,13 +25,13 @@ click==8.1.7
     # via
     #   -r requirements.in
     #   flask
-cryptography==43.0.1
+cryptography==44.0.0
     # via
     #   -r requirements.in
     #   authlib
+    #   secretstorage
+flask==3.1.0
 deepdiff==8.0.1
-    # via -r requirements.in
-flask==3.0.3
     # via
     #   -r requirements.in
     #   flask-login
@@ -41,9 +41,9 @@ flask-login==0.6.3
     # via -r requirements.in
 flask-sqlalchemy==3.1.1
     # via -r requirements.in
-flask-wtf==1.2.1
+flask-wtf==1.2.2
     # via -r requirements.in
-flickr-photos-api==2.11.2
+flickr-photos-api==2.14.0
     # via -r requirements.in
 flickr-url-parser==1.10.0
     # via
@@ -55,7 +55,7 @@ h11==0.14.0
     # via httpcore
 httpcore==1.0.2
     # via httpx
-httpx==0.27.2
+httpx==0.28.1
     # via
     #   -r requirements.in
     #   flickr-photos-api
@@ -67,8 +67,7 @@ idna==3.4
     #   anyio
     #   httpx
     #   hyperlink
-    #   requests
-itsdangerous==2.1.2
+itsdangerous==2.2.0
     # via
     #   flask
     #   flask-wtf
@@ -80,7 +79,7 @@ jaraco-functools==4.0.1
     # via keyring
 jinja2==3.1.2
     # via flask
-keyring==25.3.0
+keyring==25.5.0
     # via -r requirements.in
 libsass==0.23.0
     # via -r requirements.in
@@ -105,9 +104,9 @@ packaging==23.2
     #   pywikibot
 pycparser==2.21
     # via cffi
-pydantic==2.9.1
+pydantic==2.10.4
     # via -r requirements.in
-pydantic-core==2.23.3
+pydantic-core==2.27.2
     # via pydantic
 pywikibot==9.3.1
     # via -r requirements.in
@@ -120,25 +119,22 @@ requests-oauthlib==2.0.0
 silver-nitrate==1.1.2
     # via flickr-photos-api
 sniffio==1.3.0
-    # via
-    #   anyio
-    #   httpx
+    # via anyio
 soupsieve==2.5
     # via beautifulsoup4
 sqlalchemy==2.0.23
     # via flask-sqlalchemy
 tenacity==8.2.3
     # via flickr-photos-api
-tqdm==4.66.5
+tqdm==4.67.1
     # via -r requirements.in
-typing-extensions==4.8.0
+typing-extensions==4.12.2
     # via
     #   pydantic
     #   pydantic-core
     #   sqlalchemy
+werkzeug==3.1.3
 urllib3==2.2.2
-    # via requests
-werkzeug==3.0.4
     # via
     #   -r requirements.in
     #   flask
