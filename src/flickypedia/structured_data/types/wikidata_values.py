@@ -114,6 +114,13 @@ def to_wikidata_string_value(*, value: str) -> DataValueTypes.String:
     return {"value": value, "type": "string"}
 
 
+def to_wikidata_monolingualtext_value(*, text: str, language: str) -> DataValueTypes.MonolingualText:
+    """
+    Create a datavalue for a monolingual text string.
+    """
+    return {"value": {"text": text, "language": language}, "type": "monolingualtext"}
+
+
 def render_wikidata_date(value: Value.Time) -> str:
     """
     Given a Wikidata date from the SDC, render it as text.

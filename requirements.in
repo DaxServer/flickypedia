@@ -2,6 +2,7 @@ authlib
 bs4
 click
 cryptography
+deepdiff
 flask
 flask-login
 flask-wtf
@@ -12,7 +13,9 @@ gunicorn
 httpx
 keyring
 libsass
+requests-oauthlib
 pydantic
+pywikibot
 tqdm
 
 # This pin is because of an ImportError in flask-login caused by

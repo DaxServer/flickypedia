@@ -74,6 +74,13 @@ def create_actions(
             )
             continue
 
+        # We update License, Copyright status if it is the same as existing and there is only one
+        # or add one if there is none
+        if (property_id == WP.CopyrightLicense or property_id == WP.CopyrightStatus) and len(existing_statements) > 0:
+            if len(existing_statements) != 1 or not are_equivalent_snaks(existing_statements[0]["mainsnak"], new_statement["mainsnak"]):
+                actions.append(DoNothing(property_id=property_id, action="do_nothing"))
+                continue
+
         for statement in existing_statements:
             # If there's an equivalent statement in the existing SDC,
             # then we don't need to do anything.

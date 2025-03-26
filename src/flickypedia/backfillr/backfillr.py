@@ -8,7 +8,7 @@ from flickypedia.structured_data import (
     create_sdc_claims_for_existing_flickr_photo,
 )
 from flickypedia.structured_data.statements import create_flickr_photo_id_statement
-from .actions import Action, create_actions
+from .actions import create_actions
 from .flickr_matcher import (
     FindResult,
     find_flickr_photo_id_from_sdc,
@@ -39,12 +39,12 @@ class Backfillr:
 
         return find_result
 
-    def update_file(self, *, filename: str) -> list[Action]:
+    def update_file(self, *, filename: str, mid: str) -> list:
         """
         Given a file on Wikimedia Commons, add any extra metadata
         from the current photo on Flickr.
         """
-        existing_claims = self.wikimedia_api.get_structured_data(filename=filename)
+        existing_claims = self.wikimedia_api.get_structured_data(mid=mid)
         flickr_id = self._find_flickr_photo(
             existing_claims=existing_claims, filename=filename
         )
@@ -83,11 +83,4 @@ class Backfillr:
             else:  # pragma: no cover
                 raise ValueError(f"Unrecognised action: {a['action']}")
 
-        if claims:
-            self.wikimedia_api.add_structured_data(
-                filename=filename,
-                data={"claims": claims},
-                summary="Update the [[Commons:Structured data|structured data]] based on metadata from Flickr",
-            )
-
-        return actions
+        return claims

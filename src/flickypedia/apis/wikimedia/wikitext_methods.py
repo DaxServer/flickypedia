@@ -1,25 +1,24 @@
 """
 Methods for dealing with Wikitext.
 """
+from abc import ABC
 
 from .base import WikimediaApiBase
 from .exceptions import MissingFileException, UnknownWikimediaApiException
 
 
-class WikitextMethods(WikimediaApiBase):
-    def get_wikitext(self, *, filename: str) -> str:
+class WikitextMethods(WikimediaApiBase, ABC):
+    def get_wikitext(self, *, fileid: int, filename: str) -> str:
         """
         Return the Wikitext for this page, if it exists.
 
         See https://www.mediawiki.org/wiki/API:Parsing_wikitext
         """
-        assert filename.startswith("File:")
-
         try:
             resp = self._get_json(
                 params={
                     "action": "parse",
-                    "page": filename,
+                    "pageid": fileid,
                     "prop": "text",
                 },
             )
