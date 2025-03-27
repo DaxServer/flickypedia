@@ -9,6 +9,7 @@ from flickypedia.structured_data import (
     NewClaims,
     NewStatement,
     WikidataProperties as WP,
+    WikidataEntities,
 )
 from .comparisons import (
     are_equivalent_qualifiers,
@@ -52,7 +53,7 @@ Action = DoNothing | AddMissing | AddQualifiers | ReplaceStatement | Unknown
 
 
 def create_actions(
-    existing_claims: ExistingClaims, new_claims: NewClaims, user: FlickrUser | None
+    existing_claims: ExistingClaims, new_claims: NewClaims, user: FlickrUser | None, is_us_pd: bool = False
 ) -> list[Action]:
     actions: list[Action] = []
 
@@ -72,6 +73,14 @@ def create_actions(
                     statement=new_statement,
                 )
             )
+            continue
+
+        if property_id == WP.CopyrightStatus and len(existing_statements) == 1 and is_us_pd:
+            if not are_equivalent_snaks(existing_statements[0]["mainsnak"], new_statement["mainsnak"]) and existing_statements[0]["mainsnak"]["datavalue"]["value"]["id"] == WikidataEntities.DedicatedToPublicDomainByCopyrightOwner:
+                actions.append(ReplaceStatement(property_id=property_id, action="replace_statement", statement_id=existing_statements[0]["id"], statement=new_statement))
+            else:
+                actions.append(DoNothing(property_id=property_id, action="do_nothing"))
+
             continue
 
         # We update License, Copyright status if it is the same as existing and there is only one
