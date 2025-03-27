@@ -25,6 +25,7 @@ def _create_sdc_claims_for_flickr_photo(
     user: UserInfo | None = None,
     photo_id: str | None = None,
     photo_url: str | None = None,
+    is_us_pd: bool = False,
 ) -> NewClaims:
     """
     Creates a complete structured data claim for a Flickr photo.
@@ -101,7 +102,8 @@ def _create_sdc_claims_for_flickr_photo(
             )
 
             copyright_statement = create_copyright_status_statement(
-                license_id=photo["license"]["id"]
+                license_id=photo["license"]["id"],
+                is_us_pd=is_us_pd,
             )
 
             statements.extend([license_statement, copyright_statement])
@@ -149,6 +151,7 @@ def create_sdc_claims_for_existing_flickr_photo(
         user: UserInfo | None = None,
         photo_id: str | None = None,
         photo_url: str | None = None,
+        is_us_pd: bool = False,
 ) -> NewClaims:
     """
     Create the SDC claims for a photo which has already been uploaded to WMC.
@@ -164,4 +167,4 @@ def create_sdc_claims_for_existing_flickr_photo(
         the new license, or it doesn't know how to reconcile the conflicting SDC.
 
     """
-    return _create_sdc_claims_for_flickr_photo(mode="existing_photo", photo=photo, user=user, photo_id=photo_id, photo_url=photo_url)
+    return _create_sdc_claims_for_flickr_photo(mode="existing_photo", photo=photo, user=user, photo_id=photo_id, photo_url=photo_url, is_us_pd=is_us_pd)
