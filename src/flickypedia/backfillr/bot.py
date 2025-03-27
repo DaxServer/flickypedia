@@ -62,6 +62,11 @@ class CuratorBot:
                 statement = a["statement"]
                 statement["id"] = a["statement_id"]
                 claims.append(statement)
+            elif a["action"] == "remove_statement":
+                claims.append({
+                    "id": a["statement_id"],
+                    "remove": "",
+                })
             else:
                 raise ValueError(f"Unrecognised action: {a['action']}")
 
