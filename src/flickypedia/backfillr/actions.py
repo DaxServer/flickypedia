@@ -44,12 +44,18 @@ class ReplaceStatement(typing.TypedDict):
     statement: NewStatement
 
 
+class RemoveStatement(typing.TypedDict):
+    property_id: str
+    action: typing.Literal["remove_statement"]
+    statement_id: str
+
+
 class Unknown(typing.TypedDict):
     property_id: str
     action: typing.Literal["unknown"]
 
 
-Action = DoNothing | AddMissing | AddQualifiers | ReplaceStatement | Unknown
+Action = DoNothing | AddMissing | AddQualifiers | ReplaceStatement | RemoveStatement | Unknown
 
 
 def create_actions(

@@ -107,7 +107,7 @@ class CuratorBot:
         return existing_claims
 
     def is_us_pd(self, raw_extracted_templates) -> bool:
-        templates = [t for (t, x) in raw_extracted_templates]
+        templates = [t.replace(' ', '_') for (t, x) in raw_extracted_templates]
 
         return any([t in self.pd_us_templates for t in templates])
 
