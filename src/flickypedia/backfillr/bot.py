@@ -112,7 +112,7 @@ class CuratorBot:
         return any([t in self.pd_us_templates for t in templates])
 
     def process_page(self, page: Page, summary: str | None = None, inject_us_pd: bool = False) -> None:
-        page_id = str(page.pageid)
+        page_id = page.pageid
         mid = f"M{page_id}"
         pywikibot.info(f"Processing {mid}")
 
@@ -123,7 +123,7 @@ class CuratorBot:
         pywikibot.debug(existing_claims)
 
         start = perf_counter()
-        wikitext_parsed = self.wikimedia_api.get_wikitext(fileid=int(page_id), filename=filename)
+        wikitext_parsed = self.wikimedia_api.get_wikitext(fileid=page_id, filename=filename)
         pywikibot.info(f"Retrieved parsed wikitext in {(perf_counter() - start) * 1000:.0f} ms")
         pywikibot.debug(wikitext_parsed)
 
@@ -189,18 +189,21 @@ class CuratorBot:
         )
 
     def flickr(self) -> None:
-        generator = SearchPageGenerator('file: deepcat:"Files from Flickr" -haswbstatement:P170', site=self.site)
+        search = 'file: deepcat:"Files from Flickr" -haswbstatement:P170'
+        pywikibot.info(search)
+        generator = SearchPageGenerator(search, site=self.site)
 
         for page in generator:
             self.process_page(page)
 
     def flickr_fix(self):
-        generator = SearchPageGenerator(
-            'file: deepcat:"Files from Flickr" deepcat:"PD US Government" haswbstatement:P6216=Q88088423',
-            site=self.site)
+        search = 'file: deepcat:"Files from Flickr" haswbstatement:P6216=Q88088423'
+        pywikibot.info(search)
+        generator = SearchPageGenerator(search, site=self.site)
 
         for page in generator:
             if 'CuratorBot' not in page.contributors():
+                pywikibot.info(f"Skipping {page.title()} as it was not edited by CuratorBot")
                 continue
 
             self.process_page(page, "Fix US PD [[Commons:Structured data|SDC]] based on metadata from Flickr. Task #2, see [[User_talk:DaxServer/Archive_2#CuratorBot_adding_incorrect_copyright_statements|discussion]]", True)
