@@ -9,6 +9,7 @@ from flickypedia.structured_data import (
     NewClaims,
     NewStatement,
     WikidataProperties as WP,
+    WikidataEntities,
 )
 from .comparisons import (
     are_equivalent_qualifiers,
@@ -43,16 +44,22 @@ class ReplaceStatement(typing.TypedDict):
     statement: NewStatement
 
 
+class RemoveStatement(typing.TypedDict):
+    property_id: str
+    action: typing.Literal["remove_statement"]
+    statement_id: str
+
+
 class Unknown(typing.TypedDict):
     property_id: str
     action: typing.Literal["unknown"]
 
 
-Action = DoNothing | AddMissing | AddQualifiers | ReplaceStatement | Unknown
+Action = DoNothing | AddMissing | AddQualifiers | ReplaceStatement | RemoveStatement | Unknown
 
 
 def create_actions(
-    existing_claims: ExistingClaims, new_claims: NewClaims, user: FlickrUser | None
+    existing_claims: ExistingClaims, new_claims: NewClaims, user: FlickrUser | None, is_us_pd: bool = False
 ) -> list[Action]:
     actions: list[Action] = []
 
@@ -73,6 +80,26 @@ def create_actions(
                 )
             )
             continue
+
+        if property_id == WP.CopyrightStatus and is_us_pd and len(existing_statements) > 0:
+            if (len(existing_statements) == 1 and
+                    not are_equivalent_snaks(existing_statements[0]["mainsnak"], new_statement["mainsnak"]) and
+                    existing_statements[0]["mainsnak"]["datavalue"]["value"]["id"] == WikidataEntities.DedicatedToPublicDomainByCopyrightOwner):
+                actions.append(ReplaceStatement(property_id=property_id, action="replace_statement",
+                                                statement_id=existing_statements[0]["id"], statement=new_statement))
+                continue
+
+            allowed_ids = [WikidataEntities.DedicatedToPublicDomainByCopyrightOwner, WikidataEntities.PublicDomain]
+            if len(existing_statements) == 2 and all([st["mainsnak"]["datavalue"]["value"]["id"] in allowed_ids for st in existing_statements]):
+                for statement in existing_statements:
+                    match statement["mainsnak"]["datavalue"]["value"]["id"]:
+                        case WikidataEntities.DedicatedToPublicDomainByCopyrightOwner:
+                            actions.append(RemoveStatement(property_id=property_id, action="remove_statement", statement_id=statement["id"]))
+                        case WikidataEntities.PublicDomain:
+                            actions.append(ReplaceStatement(property_id=property_id, action="replace_statement", statement_id=statement["id"], statement=new_statement))
+                continue
+
+            actions.append(DoNothing(property_id=property_id, action="do_nothing"))
 
         # We update License, Copyright status if it is the same as existing and there is only one
         # or add one if there is none
