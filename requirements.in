@@ -1,6 +1,7 @@
 authlib
 bs4
 click
+cffi>=1.17.1
 cryptography
 deepdiff
 flask
@@ -15,7 +16,7 @@ keyring
 libsass
 requests-oauthlib
 pydantic
-pywikibot
+pywikibot>=10.0.0
 tqdm
 
 # This pin is because of an ImportError in flask-login caused by
