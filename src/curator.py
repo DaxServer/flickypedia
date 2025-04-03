@@ -9,16 +9,37 @@ import flickr_url_parser
 import httpx
 import pywikibot
 from deepdiff import DeepDiff
-from flickr_photos_api import FlickrApi, PhotoIsPrivate, ResourceNotFound
+from flickr_photos_api import FlickrApi, PhotoIsPrivate, ResourceNotFound, UserDeleted
 from httpx import Client
 from pywikibot import Site, Page
 from pywikibot.pagegenerators import SearchPageGenerator
+from redis import Redis
 
 from flickypedia.apis import WikimediaApi
 from flickypedia.backfillr.actions import create_actions
 from flickypedia.backfillr.flickr_matcher import find_flickr_photo_id_from_sdc, \
-    find_flickr_photo_id_from_parsed_wikitext
-from flickypedia.structured_data import create_sdc_claims_for_existing_flickr_photo
+    find_flickr_photo_id_from_parsed_wikitext, FindResult
+from flickypedia.structured_data import create_sdc_claims_for_existing_flickr_photo, NewClaims
+
+
+def extract_flickr_id(existing_claims, wikitext_parsed) -> FindResult | None:
+    flickr_id = None
+
+    try:
+        flickr_id = find_flickr_photo_id_from_sdc(existing_claims)
+
+        if flickr_id is None or flickr_id["url"] is None:
+            flickr_id_wikitext = find_flickr_photo_id_from_parsed_wikitext(wikitext_parsed)
+
+            if flickr_id_wikitext is not None:
+                if flickr_id is not None and flickr_id["photo_id"] != flickr_id_wikitext["photo_id"]:
+                    pywikibot.error(f"Photo ID mismatch: SDC {flickr_id} vs Wikitext {flickr_id_wikitext}")
+                else:
+                    flickr_id = flickr_id_wikitext
+    except Exception as e:
+        pywikibot.warning(f"Warning: {e}")
+
+    return flickr_id
 
 
 class CuratorBot:
@@ -46,6 +67,8 @@ class CuratorBot:
         self.pd_us_templates = [t['title'] for t in httpx.get('https://petscan.wmcloud.org/?psid=33444757&format=json').json()['*'][0]['a']['*']]
 
         self.flickr_api = FlickrApi.with_api_key(api_key=os.getenv("FLICKR_API_KEY"), user_agent=self.user_agent)
+        self.redis = Redis(host='redis.svc.tools.eqiad1.wikimedia.cloud', db=9)
+        self.redis_prefix = 'xQ6cz5J84Viw/K6FIcOH1kxJjfiS8jO56AoSmhBgO/A='
 
     def update(self, mid: str, summary: str, existing_claims, new_claims, user = None, is_us_pd: bool = False) -> None:
         actions = create_actions(existing_claims, new_claims, user, is_us_pd)
@@ -72,6 +95,7 @@ class CuratorBot:
 
         if not claims:
             pywikibot.info("No claims to set")
+            self.redis.set(f'{self.redis_prefix}:commons:{mid}', 1)
             return
 
         pywikibot.debug(f"The claims are {claims}")
@@ -98,9 +122,7 @@ class CuratorBot:
 
     def get_existing_claims(self, mid):
         start = perf_counter()
-
         existing_claims = self.wikimedia_api.get_structured_data(mid=mid)
-
         pywikibot.info(f"Retrieved existing SDC in {(perf_counter() - start) * 1000:.0f} ms")
         pywikibot.debug(existing_claims)
 
@@ -116,6 +138,13 @@ class CuratorBot:
         mid = f"M{page_id}"
         pywikibot.info(f"Processing {mid}")
 
+        redis_key = f'{self.redis_prefix}:commons:{mid}'
+
+        # Check Redis cache to avoid processing the same page multiple times
+        if self.redis.get(redis_key) is not None:
+            pywikibot.warning(f"[{mid}] Skipping due to Redis cache")
+            return
+
         filename = page.title()
         pywikibot.info(f"URL for {mid}: {page.full_url()}")
 
@@ -130,51 +159,19 @@ class CuratorBot:
         is_us_pd = self.is_us_pd(page.raw_extracted_templates)
         pywikibot.info(f"Is US PD: {is_us_pd}")
 
-        try:
-            flickr_id = find_flickr_photo_id_from_sdc(existing_claims)
-
-            if flickr_id is None or flickr_id["url"] is None:
-                flickr_id_wikitext = find_flickr_photo_id_from_parsed_wikitext(wikitext_parsed)
-
-                if flickr_id_wikitext is not None:
-                    if flickr_id is not None and flickr_id["photo_id"] != flickr_id_wikitext["photo_id"]:
-                        pywikibot.error(f"Photo ID mismatch: SDC {flickr_id} vs Wikitext {flickr_id_wikitext}")
-                        return
-                    flickr_id = flickr_id_wikitext
-        except Exception as e:
-            pywikibot.warning(f"Warning: {e}")
-            flickr_id = None
+        flickr_id = extract_flickr_id(existing_claims, wikitext_parsed)
 
         if flickr_id is None:
             pywikibot.error("Unable to find Flickr ID")
+            self.redis.set(redis_key, 1)
             return
 
-        pywikibot.info(f"Flickr ID: {flickr_id}")
+        pywikibot.info(flickr_id)
 
-        try:
-            start = perf_counter()
-            single_photo = self.flickr_api.get_single_photo(photo_id=flickr_id["photo_id"])
-            pywikibot.info(f"Retrieved Flickr photo in {(perf_counter() - start) * 1000:.0f} ms")
-            new_claims = create_sdc_claims_for_existing_flickr_photo(photo=single_photo, is_us_pd=is_us_pd)
-            user = single_photo["owner"]
-        except (PhotoIsPrivate, ResourceNotFound) as e:
-            pywikibot.warning(f"{flickr_id['photo_id']} warning: {e}")
+        new_claims, user = self.get_flickr_photo(flickr_id, is_us_pd)
 
-            try:
-                start = perf_counter()
-                user_url = flickr_url_parser.parse_flickr_url(flickr_id["url"])["user_url"]
-                user = self.flickr_api.get_user(user_url=user_url)
-                pywikibot.info(f"Retrieved Flickr user in {(perf_counter() - start) * 1000:.0f} ms")
-
-                new_claims = create_sdc_claims_for_existing_flickr_photo(user=user, photo_id=flickr_id["photo_id"],
-                                                                         photo_url=flickr_id["url"], is_us_pd=is_us_pd)
-            except Exception as e:
-                pywikibot.warning(f"{flickr_id['photo_id']} warning: {e}")
-                return
-        except Exception as e:
-            pywikibot.warning(f"{flickr_id['photo_id']} warning: {e}")
-            time.sleep(60)
-            return
+        if user is None:
+            new_claims, user = self.get_flickr_user(flickr_id, is_us_pd)
 
         pywikibot.debug(new_claims)
         pywikibot.debug(user)
@@ -187,6 +184,61 @@ class CuratorBot:
             user,
             inject_us_pd and is_us_pd,
         )
+
+    def get_flickr_photo(self, flickr_id: FindResult, is_us_pd: bool) -> tuple[NewClaims, str | None]:
+        new_claims = NewClaims(claims=[])
+        user = None
+
+        redis_key_photo = f'{self.redis_prefix}:{flickr_id["photo_id"]}:photo'
+
+        # Check Redis cache if Flickr photo is not available
+        if self.redis.get(redis_key_photo) is not None:
+            pywikibot.warning(f"[{flickr_id['photo_id']}] Flickr photo skipped due to Redis cache")
+            return new_claims, user
+
+        try:
+            start = perf_counter()
+            single_photo = self.flickr_api.get_single_photo(photo_id=flickr_id["photo_id"])
+            pywikibot.info(f"Retrieved Flickr photo in {(perf_counter() - start) * 1000:.0f} ms")
+
+            new_claims = create_sdc_claims_for_existing_flickr_photo(photo=single_photo, is_us_pd=is_us_pd)
+            user = single_photo["owner"]
+        except (PhotoIsPrivate, ResourceNotFound) as e:
+            pywikibot.warning(f"[{flickr_id['photo_id']}] {e}")
+            self.redis.set(redis_key_photo, 1)
+        except Exception as e:
+            pywikibot.error(f"[{flickr_id['photo_id']}] {e}")
+            time.sleep(60)
+
+        return new_claims, user
+
+    def get_flickr_user(self, flickr_id: FindResult, is_us_pd: bool) -> tuple[NewClaims, str | None]:
+        new_claims = NewClaims(claims=[])
+        user = None
+
+        redis_key_user = f'{self.redis_prefix}:{flickr_id["photo_id"]}:user'
+
+        # Check Redis cache if Flickr user is not available from Photo API
+        if self.redis.get(redis_key_user) is not None:
+            pywikibot.warning(f"[{flickr_id['photo_id']}] Flickr user skipped due to Redis cache")
+            return new_claims, user
+
+        try:
+            start = perf_counter()
+            user_url = flickr_url_parser.parse_flickr_url(flickr_id["url"])["user_url"]
+            user = self.flickr_api.get_user(user_url=user_url)
+            pywikibot.info(f"Retrieved Flickr user in {(perf_counter() - start) * 1000:.0f} ms")
+
+            new_claims = create_sdc_claims_for_existing_flickr_photo(user=user, photo_id=flickr_id["photo_id"],
+                                                                     photo_url=flickr_id["url"], is_us_pd=is_us_pd)
+        except (UserDeleted, ResourceNotFound) as e:
+            pywikibot.warning(f"[{flickr_id['photo_id']}] {e}")
+            self.redis.set(redis_key_user, 1)
+        except Exception as e:
+            pywikibot.error(f"[{flickr_id['photo_id']}] {e}")
+            time.sleep(60)
+
+        return new_claims, user
 
     def flickr(self) -> None:
         search = 'file: deepcat:"Files from Flickr" -haswbstatement:P170'

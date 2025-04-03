@@ -14,6 +14,7 @@ gunicorn
 httpx
 keyring
 libsass
+redis[hiredis]
 requests-oauthlib
 pydantic
 pywikibot>=10.0.0
