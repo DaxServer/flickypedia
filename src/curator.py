@@ -157,6 +157,7 @@ class CuratorBot:
 
         if flickr_id is None:
             pywikibot.error("Unable to find Flickr ID")
+            self.redis.set(redis_key, 1)
             return
 
         pywikibot.info(flickr_id)
