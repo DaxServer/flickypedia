@@ -121,9 +121,7 @@ class CuratorBot:
 
     def get_existing_claims(self, mid):
         start = perf_counter()
-
         existing_claims = self.wikimedia_api.get_structured_data(mid=mid)
-
         pywikibot.info(f"Retrieved existing SDC in {(perf_counter() - start) * 1000:.0f} ms")
         pywikibot.debug(existing_claims)
 
@@ -138,6 +136,13 @@ class CuratorBot:
         page_id = page.pageid
         mid = f"M{page_id}"
         pywikibot.info(f"Processing {mid}")
+
+        redis_key = f'{self.redis_prefix}:commons:{mid}'
+
+        # Check Redis cache to avoid processing the same page multiple times
+        if self.redis.get(redis_key) is not None:
+            pywikibot.warning(f"[{mid}] Skipping due to Redis cache")
+            return
 
         filename = page.title()
         pywikibot.info(f"URL for {mid}: {page.full_url()}")
