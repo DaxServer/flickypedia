@@ -114,7 +114,7 @@ class CuratorBot:
 
         try:
             start = perf_counter()
-            # request.submit()
+            request.submit()
             pywikibot.info(f"Updating {mid} took {(perf_counter() - start):.1f} s")
         except Exception as e:
             pywikibot.critical(f"Failed to update: {e}")
