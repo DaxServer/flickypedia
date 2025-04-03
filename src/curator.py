@@ -95,6 +95,7 @@ class CuratorBot:
 
         if not claims:
             pywikibot.info("No claims to set")
+            self.redis.set(f'{self.redis_prefix}:commons:{mid}', 1)
             return
 
         pywikibot.debug(f"The claims are {claims}")
